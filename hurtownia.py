@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from urllib.parse import urlparse
+from database1 import Database
 
 def main():
    
@@ -31,10 +32,10 @@ def main():
                     break
                 mainlist.extend(product_details(soup1))
                 page += 1
-            
+        
         # get_excel(mainlist,name)
-        get_sql_table(category,mainlist)
-        get_sql_values(mainlist,db.conn,category)
+        db = get_sql_table(name,mainlist)
+        get_sql_values(mainlist,db.conn,name)
         
  
 def html_access(url):
@@ -53,7 +54,7 @@ def get_categories(soup, category):
 
 def get_category_name (item):
 
-    name = urlparse(item).path.replace('/','')
+    name = urlparse(item).path.replace('/','').replace('-','_').replace('155','')
     return name
 
   
@@ -79,7 +80,7 @@ def get_sql_table(category, mainlist):
     all_keys = set().union(*(d.keys() for d in mainlist))
     columns = " ,".join(list(all_keys))
     db = Database('Hurtownia Zabawek')
-    db.create_table(f'''CREATE TABLE {endpoint} ({columns})''')
+    db.create_table(f'''CREATE TABLE {category} ({columns})''')
     return db
 
 
