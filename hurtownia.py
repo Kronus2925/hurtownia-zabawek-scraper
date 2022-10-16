@@ -17,30 +17,28 @@ def main():
         page = 1
         name = get_category_name(i)
         mainlist = []
-        soup1 = html_access(url)
-        roducts = product_details(soup1)
-        parse_price(roducts)
-        
-        
-        # while True:
+     
+
+        while True:
             
-        #     if page == 1:
-        #         url = i
-        #         soup1 = html_access(url)
-        #         mainlist.extend(product_details(soup1))
-        #         page += 1
+            if page == 1:
+                url = i
+                soup1 = html_access(url)
+                mainlist.extend(parse_price(product_details(soup1)))
+                page += 1
                     
-        #     else:
-        #         url = i + f'strona-{page}/'
-        #         soup1 = html_access(url)
-        #         if  not soup1.find_all('div',{"class": "pager"}):
-        #             break
-        #         mainlist.extend(product_details(soup1))
-        #         page += 1
+            else:
+                url = i + f'strona-{page}/'
+                soup1 = html_access(url)
+                if  not soup1.find_all('div',{"class": "pager"}):
+                    break
+                mainlist.extend(parse_price(product_details(soup1)))
+                page += 1
         
         # get_excel(mainlist,name)
-        # db = get_sql_table(name,mainlist)
-        # get_sql_values(mainlist,db.conn,name)
+        db = get_sql_table(name,mainlist)
+        get_sql_values(mainlist,db.conn,name)
+        
         
  
 def html_access(url):
@@ -59,7 +57,7 @@ def get_categories(soup, category):
 
 def get_category_name (item):
 
-    name = urlparse(item).path.replace('/','').replace('-','_').replace('155 ','')
+    name = urlparse(item).path.replace('/','').replace('-','_').replace('155_','')
     return name
 
   
@@ -75,16 +73,19 @@ def product_details(soup):
             "availability" : 'YES'if i.find('i',{'class':"bialy-icon_05"}) else 'NO'
         }
         roducts.append(products)
+
     return roducts
 
-
 def parse_price(roducts):
+    products2 = []
     for i in roducts:
         e = i['price']
         if len(e) > 8:
-            e = e[-str.index(e, "ł")-1:]
-        print(type(e))
-    return e
+            e = float(str(e[-str.index(e, "ł")-1:]).replace('\xa0zł','').replace(',','.').strip()).
+        i.update({"price":e})
+        products2.append(i)
+    return products2
+
 
 def get_excel(roducts,i):
     df = pd.DataFrame(roducts)
@@ -102,6 +103,7 @@ def get_sql_table(category, mainlist):
 def get_sql_values(mainlist, db, category):
     df = pd.DataFrame(mainlist)
     df.to_sql(category, db, if_exists='replace',index=False)
+    
    
 if __name__ == '__main__':    
     main()
